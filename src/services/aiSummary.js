@@ -1,3 +1,4 @@
+
 export async function getAISummary({ classes, assignments, weather, budget, medicines }) {
   const prompt = `
 You are a helpful assistant for a student. Based on this data, write a short, warm daily summary (4-5 sentences) ending with one recommended priority for today.
@@ -10,7 +11,7 @@ Medicines today: ${JSON.stringify(medicines)}
 `;
 
   const res = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AQ.Ab8RN6LSS9Ag4Ygp1SCAdFg3ODgBnE2prz_cZmqf1l76U53yVA",
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
