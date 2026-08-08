@@ -1,13 +1,11 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-<<<<<<< HEAD
 import Timetable from "./Timetable";
 import Budget from "./Budget";
-=======
 import Assignments from "./Assignments";
 import Medicines from "./Medicines";
 import Events from "./Events";
->>>>>>> 3c0c0d00d3fdb0a969f69494b2452404e1a0d4e1
+import { getAISummary } from "../services/aiSummary";
 
 const container = {
   hidden: { opacity: 0 },
@@ -21,11 +19,37 @@ const cardVariant = {
 
 export default function Dashboard({ user, onLogout }) {
   const [greeting, setGreeting] = useState("");
+  const [weather, setWeather] = useState(null);
+  const [aiSummary, setAiSummary] = useState(null);
 
   useEffect(() => {
     const hour = new Date().getHours();
     setGreeting(hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening");
   }, []);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}`
+      );
+      setWeather(await res.json());
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!weather) return; // wait until weather has loaded first
+
+    getAISummary({
+      classes: [],       // wire in real timetable data later if time allows
+      assignments: [],   // same for assignments
+      weather: weather,
+      budget: 6000,       // hardcoded for now, matches Budget.jsx
+      medicines: [],
+    }).then((result) => {
+      setAiSummary(result);
+    });
+  }, [weather]);
 
   return (
     <div className="min-h-screen p-6 md:p-10 max-w-6xl mx-auto">
@@ -63,25 +87,26 @@ export default function Dashboard({ user, onLogout }) {
           🤖 Today's Focus
         </span>
         <p className="font-display text-lg md:text-xl leading-relaxed mt-2">
-          Your AI summary will appear here once wired up in Phase 9.
+          {aiSummary || "Thinking about your day..."}
         </p>
       </motion.div>
 
       <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <Card title="🌤 Weather" variants={cardVariant}>Coming soon</Card>
-<<<<<<< HEAD
+        <Card title="🌤 Weather" variants={cardVariant}>
+          {weather ? (
+            <div>
+              <p className="text-2xl font-semibold">{Math.round(weather.main.temp)}°C</p>
+              <p className="capitalize">{weather.weather[0].description}</p>
+            </div>
+          ) : (
+            "Loading weather..."
+          )}
+        </Card>
         <Card title="📚 Today's Classes" variants={cardVariant}><Timetable /></Card>
-        <Card title="📝 Assignments Due" variants={cardVariant}>Coming soon</Card>
-        <Card title="💰 Budget Remaining" variants={cardVariant}><Budget /></Card>
-        <Card title="💊 Medicines Today" variants={cardVariant}>Coming soon</Card>
-        <Card title="🎂 Upcoming Events" variants={cardVariant}>Coming soon</Card>
-=======
-        <Card title="📚 Today's Classes" variants={cardVariant}>Coming soon</Card>
         <Card title="📝 Assignments Due" variants={cardVariant}><Assignments /></Card>
-        <Card title="💰 Budget Remaining" variants={cardVariant}>Coming soon</Card>
+        <Card title="💰 Budget Remaining" variants={cardVariant}><Budget /></Card>
         <Card title="💊 Medicines Today" variants={cardVariant}><Medicines /></Card>
         <Card title="🎂 Upcoming Events" variants={cardVariant}><Events /></Card>
->>>>>>> 3c0c0d00d3fdb0a969f69494b2452404e1a0d4e1
       </motion.div>
     </div>
   ); 
