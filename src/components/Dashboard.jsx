@@ -8,17 +8,33 @@ import Assignments from "./Assignments";
 import Medicines from "./Medicines";
 import Events from "./Events";
 >>>>>>> 3c0c0d00d3fdb0a969f69494b2452404e1a0d4e1
+import { getAISummary } from "../services/aiSummary";
 
 const [weather, setWeather] = useState(null);
+const [aiSummary, setAiSummary] = useState(null);
 useEffect(() => {
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const { latitude, longitude } = pos.coords;
     const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=YOUR_OPENWEATHER_KEY`
+      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=c7cef241939773cce23c596e069859a9`
     );
     setWeather(await res.json());
   });
 }, []);
+
+useEffect(() => {
+  if (!weather) return; // wait until weather has loaded first
+
+  getAISummary({
+    classes: [],       // you can wire in real timetable data later if time allows
+    assignments: [],   // same for assignments
+    weather: weather,
+    budget: 6000,       // hardcoded for now, matches Budget.jsx
+    medicines: [],
+  }).then((result) => {
+    setAiSummary(result);
+  });
+}, [weather]);
 
 const container = {
   hidden: { opacity: 0 },
@@ -74,7 +90,7 @@ export default function Dashboard({ user, onLogout }) {
           🤖 Today's Focus
         </span>
         <p className="font-display text-lg md:text-xl leading-relaxed mt-2">
-          Your AI summary will appear here once wired up in Phase 9.
+        {aiSummary || "Thinking about your day..."}
         </p>
       </motion.div>
 
