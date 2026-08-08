@@ -86,9 +86,21 @@ export default function Dashboard({ user, onLogout }) {
         <span className="absolute -top-3 left-6 text-white text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "var(--accent)" }}>
           🤖 Today's Focus
         </span>
-        <p className="font-display text-lg md:text-xl leading-relaxed mt-2">
-          {aiSummary || "Thinking about your day..."}
-        </p>
+
+        {!aiSummary ? (
+          <p className="font-display text-lg mt-2">Thinking about your day...</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            <p className="font-display text-xl font-semibold">{aiSummary.greeting}</p>
+            <p className="text-sm opacity-90">🌤 {aiSummary.weather}</p>
+            <p className="text-sm opacity-90">📚 {aiSummary.routine}</p>
+            <p className="text-sm opacity-90">📝 {aiSummary.assignments}</p>
+            <p className="text-sm opacity-90">📌 {aiSummary.note}</p>
+            <p className="text-sm font-semibold mt-3" style={{ color: "var(--accent)" }}>
+              ⭐ Priority: {aiSummary.priority}
+            </p>
+          </div>
+        )}
       </motion.div>
 
       <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
