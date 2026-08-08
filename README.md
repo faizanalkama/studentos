@@ -1,16 +1,43 @@
-# React + Vite
+# StudentOS
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+StudentOS is an AI-powered daily dashboard for students — it centralizes classes, assignments, budget, medicines, and events into one place, and uses AI to tell you exactly what to prioritize today instead of making you piece it together yourself.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Live Demo
+https://studentos-2902f.web.app
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
+- **Frontend:** React (Vite) + Tailwind CSS + Framer Motion
+- **Backend:** Firebase (Authentication, Firestore, Hosting) — no separate server
+- **AI:** Google Gemini API
+- **Weather:** OpenWeather API
 
-## Expanding the Oxlint configuration
+## Features
+- 🔐 Google Sign-In authentication
+- 📚 Timetable — weekly class schedule, add/edit/delete
+- 📝 Assignments — track deadlines, mark complete
+- 🗒 Notes — quick note-taking
+- 💰 Budget — monthly budget tracking, expense logging by category, spend visualization
+- 💊 Medicines — daily medicine reminders with taken/pending status
+- 📅 Calendar/Events — upcoming events and important dates
+- 🔔 Notifications — surfaces what needs attention (due assignments, pending medicines, upcoming events, budget alerts)
+- 🌤 Live weather integration
+- 🌙 Full dark mode
+- ✨ AI Daily Briefing (see below)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## How AI Is Used
+StudentOS's signature feature is the **AI Daily Briefing**. Every day, it pulls the student's real, live data from Firestore — today's classes, assignments due soon, current weather, budget remaining, and pending medicines — and sends it to Google's Gemini API, which generates a short, personalized summary of the day plus one clear recommended priority. The briefing is cached once per day so it feels instant on repeat visits, with a manual refresh option available anytime.
+
+## Roadmap
+- **Smart Capture (OCR):** upload a photo of a timetable, assignment notice, event poster, or medicine strip and have AI extract the details automatically for confirmation before saving. Intentionally left for after the hackathon MVP due to OCR's complexity and reliability risk in a short build window.
+- Push notification support for reminders
+- Google Calendar sync
+
+## Screenshots
+![Home - Light Mode](screenshots/home-light.png)
+![Home - Dark Mode](screenshots/home-dark.png)
+![Feature Page](screenshots/feature.png)
+
+## Team
+Built by FAIZAN ALKAMA and ADARSH KUMAR MISHRA for IEMHACKS 4.0.
