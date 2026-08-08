@@ -6,6 +6,11 @@ StudentOS is an AI-powered daily dashboard for students — it centralizes class
 ## Live Demo
 https://studentos-2902f.web.app
 
+## Demo Video
+[Watch here]https://drive.google.com/file/d/19_3e7Igntjqzq_GqwU6lKz9EA2M6tJHl/view?usp=sharing
+
+## Pitch Deck
+[View PPT]https://docs.google.com/presentation/d/1Ct5wUHIuHcKFywPc5Gq3H2nvLLLzBFnm/edit?usp=sharing&ouid=102695540174128687156&rtpof=true&sd=true
 
 ## Tech Stack
 - **Frontend:** React (Vite) + Tailwind CSS + Framer Motion
