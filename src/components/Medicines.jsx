@@ -1,22 +1,15 @@
-import { useEffect, useState } from "react";
-import { collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { useState } from "react";
+import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCollection } from "../hooks/useCollection";
 
 const todayStr = new Date().toDateString();
 
 export default function Medicines() {
-  const [medicines, setMedicines] = useState([]);
+  const medicines = useCollection("medicines");
   const [form, setForm] = useState({ name: "", dosage: "", time: "" });
-
   const colRef = collection(db, "users", auth.currentUser.uid, "medicines");
-
-  useEffect(() => {
-    const unsub = onSnapshot(query(colRef), (snap) => {
-      setMedicines(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, []);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -24,21 +17,11 @@ export default function Medicines() {
     setForm({ name: "", dosage: "", time: "" });
   };
 
-  const markTaken = async (id) => {
-    await updateDoc(doc(db, "users", auth.currentUser.uid, "medicines", id), {
-      lastTakenDate: new Date().toDateString(),
-    });
-  };
-
-  const undoTaken = async (id) => {
-    await updateDoc(doc(db, "users", auth.currentUser.uid, "medicines", id), {
-      lastTakenDate: null,
-    });
-  };
-
-  const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "users", auth.currentUser.uid, "medicines", id));
-  };
+  const markTaken = (id) =>
+    updateDoc(doc(db, "users", auth.currentUser.uid, "medicines", id), { lastTakenDate: new Date().toDateString() });
+  const undoTaken = (id) =>
+    updateDoc(doc(db, "users", auth.currentUser.uid, "medicines", id), { lastTakenDate: null });
+  const handleDelete = (id) => deleteDoc(doc(db, "users", auth.currentUser.uid, "medicines", id));
 
   return (
     <div>
@@ -55,18 +38,18 @@ export default function Medicines() {
         <button type="submit" className="text-sm px-3 py-1 rounded-lg text-white" style={{ background: "var(--accent)" }}>Add</button>
       </form>
 
-      <motion.ul layout>
+      <ul>
         {medicines.length === 0 && <li className="text-sm text-[var(--ink)]/50">No medicines set yet</li>}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {medicines.map((m) => {
             const takenToday = m.lastTakenDate === todayStr;
             return (
               <motion.li
-                layout
                 key={m.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="flex items-center gap-2 text-sm mb-1.5"
               >
                 <button
@@ -85,7 +68,7 @@ export default function Medicines() {
             );
           })}
         </AnimatePresence>
-      </motion.ul>
+      </ul>
     </div>
   );
 }

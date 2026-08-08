@@ -1,20 +1,13 @@
-import { useEffect, useState } from "react";
-import { collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { useState } from "react";
+import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCollection } from "../hooks/useCollection";
 
 export default function Assignments() {
-  const [assignments, setAssignments] = useState([]);
+  const assignments = useCollection("assignments");
   const [form, setForm] = useState({ subject: "", title: "", deadline: "" });
-
   const colRef = collection(db, "users", auth.currentUser.uid, "assignments");
-
-  useEffect(() => {
-    const unsub = onSnapshot(query(colRef), (snap) => {
-      setAssignments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, []);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -22,13 +15,10 @@ export default function Assignments() {
     setForm({ subject: "", title: "", deadline: "" });
   };
 
-  const toggleDone = async (id, completed) => {
-    await updateDoc(doc(db, "users", auth.currentUser.uid, "assignments", id), { completed: !completed });
-  };
+  const toggleDone = (id, completed) =>
+    updateDoc(doc(db, "users", auth.currentUser.uid, "assignments", id), { completed: !completed });
 
-  const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "users", auth.currentUser.uid, "assignments", id));
-  };
+  const handleDelete = (id) => deleteDoc(doc(db, "users", auth.currentUser.uid, "assignments", id));
 
   return (
     <div>
@@ -45,11 +35,18 @@ export default function Assignments() {
         <button type="submit" className="text-sm px-3 py-1 rounded-lg text-white" style={{ background: "var(--accent)" }}>Add</button>
       </form>
 
-      <motion.ul layout>
+      <ul>
         {assignments.length === 0 && <li className="text-sm text-[var(--ink)]/50">No assignments yet</li>}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {assignments.map((a) => (
-            <motion.li layout key={a.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-sm mb-1.5">
+            <motion.li
+              key={a.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-2 text-sm mb-1.5"
+            >
               <button
                 onClick={() => toggleDone(a.id, a.completed)}
                 className="w-4 h-4 rounded-full border-2 flex-shrink-0 transition-colors"
@@ -65,7 +62,7 @@ export default function Assignments() {
             </motion.li>
           ))}
         </AnimatePresence>
-      </motion.ul>
+      </ul>
     </div>
   );
 }

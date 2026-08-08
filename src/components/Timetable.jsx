@@ -1,25 +1,19 @@
-import { useEffect, useState } from "react";
-import { collection, addDoc, onSnapshot, query, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { useState } from "react";
+import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCollection } from "../hooks/useCollection";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const todayShort = DAYS[(new Date().getDay() + 6) % 7];
 
 export default function Timetable() {
-  const [classes, setClasses] = useState([]);
-  const [addingFor, setAddingFor] = useState(null); // which day's mini-form is open
+  const classes = useCollection("timetable");
+  const [addingFor, setAddingFor] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ subject: "", startTime: "", endTime: "", room: "" });
 
   const colRef = collection(db, "users", auth.currentUser.uid, "timetable");
-
-  useEffect(() => {
-    const unsub = onSnapshot(query(colRef), (snap) => {
-      setClasses(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, []);
 
   const openAdd = (day) => {
     setAddingFor(day);
@@ -44,9 +38,7 @@ export default function Timetable() {
     setEditingId(null);
   };
 
-  const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "users", auth.currentUser.uid, "timetable", id));
-  };
+  const handleDelete = (id) => deleteDoc(doc(db, "users", auth.currentUser.uid, "timetable", id));
 
   return (
     <div>
@@ -70,15 +62,15 @@ export default function Timetable() {
                 {day}
               </p>
 
-              <motion.div layout className="flex flex-col gap-1 min-h-[20px]">
-                <AnimatePresence>
+              <div className="flex flex-col gap-1 min-h-[20px]">
+                <AnimatePresence initial={false}>
                   {dayClasses.map((c) => (
                     <motion.div
-                      layout
                       key={c.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
                       className="text-xs rounded-lg px-1.5 py-1 cursor-pointer group relative"
                       style={{ background: "var(--card-bg)", border: "1px solid var(--border-color)" }}
                       onClick={() => openEdit(c)}
@@ -94,7 +86,7 @@ export default function Timetable() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              </motion.div>
+              </div>
 
               <button
                 onClick={() => openAdd(day)}
@@ -108,12 +100,13 @@ export default function Timetable() {
         })}
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {addingFor && (
           <motion.form
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
             onSubmit={handleSave}
             className="flex gap-2 mt-3 flex-wrap items-center text-sm w-full"
             style={{ background: "var(--card-bg)", border: "1px solid var(--border-color)", borderRadius: "0.75rem", padding: "0.5rem" }}

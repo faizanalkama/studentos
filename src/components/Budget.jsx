@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { collection, addDoc, onSnapshot, query, doc, setDoc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { useState } from "react";
+import { addDoc, collection, doc, setDoc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCollection } from "../hooks/useCollection";
 
 export default function Budget() {
-  const [expenses, setExpenses] = useState([]);
+  const expenses = useCollection("expenses");
   const [monthlyBudget, setMonthlyBudget] = useState(6000);
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetInput, setBudgetInput] = useState("");
@@ -16,19 +17,12 @@ export default function Budget() {
   const expensesRef = collection(db, "users", uid, "expenses");
   const settingsRef = doc(db, "users", uid, "settings", "budget");
 
-  useEffect(() => {
+  useState(() => {
     getDoc(settingsRef).then((snap) => {
       if (snap.exists()) setMonthlyBudget(snap.data().monthlyBudget);
       else setDoc(settingsRef, { monthlyBudget: 6000 });
     });
-  }, []);
-
-  useEffect(() => {
-    const unsub = onSnapshot(query(expensesRef), (snap) => {
-      setExpenses(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, []);
+  });
 
   const today = new Date();
   const todaySpent = expenses.filter((e) => new Date(e.date).toDateString() === today.toDateString())
@@ -44,10 +38,7 @@ export default function Budget() {
   const handleSaveExpense = async (e) => {
     e.preventDefault();
     if (editingExpenseId) {
-      await updateDoc(doc(db, "users", uid, "expenses", editingExpenseId), {
-        amount: Number(form.amount),
-        category: form.category,
-      });
+      await updateDoc(doc(db, "users", uid, "expenses", editingExpenseId), { amount: Number(form.amount), category: form.category });
       setEditingExpenseId(null);
     } else {
       await addDoc(expensesRef, { ...form, amount: Number(form.amount), date: new Date().toISOString() });
@@ -88,16 +79,14 @@ export default function Budget() {
 
       {editingBudget && (
         <div className="flex gap-2 mb-3">
-          <input type="number" placeholder="New monthly budget" value={budgetInput}
-            onChange={(e) => setBudgetInput(e.target.value)}
-            className="border rounded-lg px-2 py-1 text-sm w-32" />
+          <input type="number" placeholder="New monthly budget" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} className="border rounded-lg px-2 py-1 text-sm w-32" />
           <button onClick={saveBudget} className="text-sm px-3 py-1 rounded-lg text-white" style={{ background: "var(--accent)" }}>Save</button>
         </div>
       )}
 
-      <div className="h-2 w-full rounded-full overflow-hidden mb-2" style={{ background: "rgba(36,41,59,0.1)" }}>
+      <div className="h-2 w-full rounded-full overflow-hidden mb-2" style={{ background: "rgba(128,128,128,0.15)" }}>
         <motion.div className="h-full rounded-full" style={{ background: pct > 85 ? "var(--accent)" : "var(--sage)" }}
-          initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" }} />
+          initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: "easeOut" }} />
       </div>
 
       <div className="flex gap-4 text-xs text-[var(--ink)]/60 mb-3">
@@ -106,33 +95,21 @@ export default function Budget() {
       </div>
 
       <form onSubmit={handleSaveExpense} className="flex gap-2 mb-2">
-        <input type="number" placeholder="Amount" value={form.amount}
-          onChange={(e) => setForm({ ...form, amount: e.target.value })}
-          className="border rounded-lg px-2 py-1 text-sm w-24" />
+        <input type="number" placeholder="Amount" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-24" />
         <select value={["Food", "Transport", "Snacks", "Shopping", "Other"].includes(form.category) ? form.category : "__custom__"}
-          onChange={(e) => {
-            if (e.target.value === "__custom__") setForm({ ...form, category: "" });
-            else setForm({ ...form, category: e.target.value });
-          }}
+          onChange={(e) => { if (e.target.value === "__custom__") setForm({ ...form, category: "" }); else setForm({ ...form, category: e.target.value }); }}
           className="border rounded-lg px-2 py-1 text-sm">
           {["Food", "Transport", "Snacks", "Shopping", "Other"].map((c) => <option key={c}>{c}</option>)}
           <option value="__custom__">+ Custom...</option>
         </select>
         {(!["Food", "Transport", "Snacks", "Shopping", "Other"].includes(form.category)) && (
-          <input
-            placeholder="Custom category"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-            className="border rounded-lg px-2 py-1 text-sm w-28"
-          />
+          <input placeholder="Custom category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-28" />
         )}
         <button type="submit" className="text-sm px-3 py-1 rounded-lg text-white" style={{ background: "var(--accent)" }}>
           {editingExpenseId ? "Update" : "Add"}
         </button>
         {editingExpenseId && (
-          <button type="button" onClick={() => { setEditingExpenseId(null); setForm({ amount: "", category: "Food" }); }} className="text-sm opacity-50">
-            Cancel
-          </button>
+          <button type="button" onClick={() => { setEditingExpenseId(null); setForm({ amount: "", category: "Food" }); }} className="text-sm opacity-50">Cancel</button>
         )}
       </form>
 
@@ -142,7 +119,7 @@ export default function Budget() {
 
       <AnimatePresence>
         {showList && (
-          <motion.ul initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 overflow-hidden">
+          <motion.ul initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="mt-2 overflow-hidden">
             {recentExpenses.map((exp) => (
               <li key={exp.id} className="flex items-center gap-2 text-xs mb-1">
                 <span>₹{exp.amount} — {exp.category} ({new Date(exp.date).toLocaleDateString()})</span>
