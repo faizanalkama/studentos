@@ -84,7 +84,7 @@ export default function Dashboard({ user, onLogout }) {
 >>>>>>> 3c0c0d00d3fdb0a969f69494b2452404e1a0d4e1
       </motion.div>
     </div>
-  );
+  ); 
 }
 
 function Card({ title, children, variants }) {
