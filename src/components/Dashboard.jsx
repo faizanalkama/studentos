@@ -1,7 +1,13 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
 import Timetable from "./Timetable";
 import Budget from "./Budget";
+=======
+import Assignments from "./Assignments";
+import Medicines from "./Medicines";
+import Events from "./Events";
+>>>>>>> 3c0c0d00d3fdb0a969f69494b2452404e1a0d4e1
 
 const container = {
   hidden: { opacity: 0 },
@@ -63,11 +69,19 @@ export default function Dashboard({ user, onLogout }) {
 
       <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
         <Card title="🌤 Weather" variants={cardVariant}>Coming soon</Card>
+<<<<<<< HEAD
         <Card title="📚 Today's Classes" variants={cardVariant}><Timetable /></Card>
         <Card title="📝 Assignments Due" variants={cardVariant}>Coming soon</Card>
         <Card title="💰 Budget Remaining" variants={cardVariant}><Budget /></Card>
         <Card title="💊 Medicines Today" variants={cardVariant}>Coming soon</Card>
         <Card title="🎂 Upcoming Events" variants={cardVariant}>Coming soon</Card>
+=======
+        <Card title="📚 Today's Classes" variants={cardVariant}>Coming soon</Card>
+        <Card title="📝 Assignments Due" variants={cardVariant}><Assignments /></Card>
+        <Card title="💰 Budget Remaining" variants={cardVariant}>Coming soon</Card>
+        <Card title="💊 Medicines Today" variants={cardVariant}><Medicines /></Card>
+        <Card title="🎂 Upcoming Events" variants={cardVariant}><Events /></Card>
+>>>>>>> 3c0c0d00d3fdb0a969f69494b2452404e1a0d4e1
       </motion.div>
     </div>
   );
