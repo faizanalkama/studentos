@@ -17,6 +17,12 @@ export default function App() {
     return unsub;
   }, []);
 
+  // Apply saved theme (light/dark) as early as possible
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "light";
+    document.documentElement.setAttribute("data-theme", saved);
+  }, []);
+
   if (loading) return <div className="p-10 text-center">Loading...</div>;
 
   return (
@@ -26,12 +32,7 @@ export default function App() {
           <Login />
         </motion.div>
       ) : (
-        <motion.div
-          key="dashboard"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
+        <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <Dashboard user={user} onLogout={() => signOut(auth)} />
         </motion.div>
       )}

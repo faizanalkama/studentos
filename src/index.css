@@ -5,16 +5,38 @@
   --ink: #24293B;
   --accent: #E86A5C;
   --sage: #7C9885;
+  --card-bg: #FFFFFF;
+  --border-color: rgba(36, 41, 59, 0.08);
+  --focus-bg: #24293B;
+  --focus-text: #FBF7F0;
+}
+
+[data-theme="dark"] {
+  --paper: #1B1F2E;
+  --ink: #F2EFE9;
+  --accent: #F0836E;
+  --sage: #8FBF9F;
+  --card-bg: #262B3D;
+  --border-color: rgba(242, 239, 233, 0.1);
+  --focus-bg: #11141F;
+  --focus-text: #F2EFE9;
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
   font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .font-display {
   font-family: 'Fraunces', serif;
+}
+
+input, select {
+  background: var(--card-bg);
+  color: var(--ink);
+  border-color: var(--border-color) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -22,4 +44,32 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas:
+      "weather budget medicine"
+      "timetable timetable timetable"
+      "assignments assignments events";
+  }
+  .area-weather { grid-area: weather; }
+  .area-budget { grid-area: budget; }
+  .area-medicine { grid-area: medicine; }
+  .area-timetable { grid-area: timetable; }
+  .area-assignments { grid-area: assignments; }
+  .area-events { grid-area: events; }
 }
