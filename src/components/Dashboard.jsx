@@ -9,6 +9,17 @@ import Medicines from "./Medicines";
 import Events from "./Events";
 >>>>>>> 3c0c0d00d3fdb0a969f69494b2452404e1a0d4e1
 
+const [weather, setWeather] = useState(null);
+useEffect(() => {
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude, longitude } = pos.coords;
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=YOUR_OPENWEATHER_KEY`
+    );
+    setWeather(await res.json());
+  });
+}, []);
+
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
@@ -68,7 +79,16 @@ export default function Dashboard({ user, onLogout }) {
       </motion.div>
 
       <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <Card title="🌤 Weather" variants={cardVariant}>Coming soon</Card>
+        <Card title="🌤 Weather" variants={cardVariant}>
+  {weather ? (
+    <div>
+      <p className="text-2xl font-semibold">{Math.round(weather.main.temp)}°C</p>
+      <p className="capitalize">{weather.weather[0].description}</p>
+    </div>
+  ) : (
+    "Loading weather..."
+  )}
+</Card>
 <<<<<<< HEAD
         <Card title="📚 Today's Classes" variants={cardVariant}><Timetable /></Card>
         <Card title="📝 Assignments Due" variants={cardVariant}>Coming soon</Card>
