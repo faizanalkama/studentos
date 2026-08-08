@@ -1,25 +1,24 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, query, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import { motion, AnimatePresence } from "framer-motion";
+import { useCollection } from "../hooks/useCollection";
 
 const todayKey = new Date().toDateString();
 
 export default function Notifications() {
   const uid = auth.currentUser.uid;
-  const [assignments, setAssignments] = useState([]);
-  const [medicines, setMedicines] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const assignments = useCollection("assignments");
+  const medicines = useCollection("medicines");
+  const events = useCollection("events");
+  const expenses = useCollection("expenses");
   const [monthlyBudget, setMonthlyBudget] = useState(6000);
 
   useEffect(() => {
-    const u1 = onSnapshot(query(collection(db, "users", uid, "assignments")), (s) => setAssignments(s.docs.map((d) => d.data())));
-    const u2 = onSnapshot(query(collection(db, "users", uid, "medicines")), (s) => setMedicines(s.docs.map((d) => d.data())));
-    const u3 = onSnapshot(query(collection(db, "users", uid, "events")), (s) => setEvents(s.docs.map((d) => d.data())));
-    const u4 = onSnapshot(query(collection(db, "users", uid, "expenses")), (s) => setExpenses(s.docs.map((d) => d.data())));
-    getDoc(doc(db, "users", uid, "settings", "budget")).then((snap) => { if (snap.exists()) setMonthlyBudget(snap.data().monthlyBudget); });
-    return () => { u1(); u2(); u3(); u4(); };
-  }, []);
+    getDoc(doc(db, "users", uid, "settings", "budget")).then((snap) => {
+      if (snap.exists()) setMonthlyBudget(snap.data().monthlyBudget);
+    });
+  }, [uid]);
 
   const today = new Date();
   const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
@@ -60,12 +59,20 @@ export default function Notifications() {
         <p className="text-sm opacity-50">Nothing needs your attention right now.</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {notifications.map((n, i) => (
-            <div key={i} className="flex items-center gap-3 text-sm rounded-xl px-4 py-3" style={{ background: "var(--card-bg)", border: "1px solid var(--border-color)" }}>
-              <span className="text-lg">{n.icon}</span>
-              <span>{n.text}</span>
-            </div>
-          ))}
+          <AnimatePresence initial={false}>
+            {notifications.map((n, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04, duration: 0.2 }}
+                className="flex items-center gap-3 text-sm rounded-xl px-4 py-3 card-elevated"
+              >
+                <span className="text-lg">{n.icon}</span>
+                <span>{n.text}</span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>

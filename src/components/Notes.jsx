@@ -1,22 +1,15 @@
-import { useEffect, useState } from "react";
-import { collection, addDoc, onSnapshot, query, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { useState } from "react";
+import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCollection } from "../hooks/useCollection";
 
-// New collection: users/{uid}/notes/{id} -> { title, body, updatedAt }
 export default function Notes() {
-  const [notes, setNotes] = useState([]);
+  const notes = useCollection("notes");
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ title: "", body: "" });
 
   const colRef = collection(db, "users", auth.currentUser.uid, "notes");
-
-  useEffect(() => {
-    const unsub = onSnapshot(query(colRef), (snap) => {
-      setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, []);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -70,14 +63,17 @@ export default function Notes() {
         </div>
       </form>
 
-      <motion.ul layout className="flex flex-col gap-2">
-        {sorted.length === 0 && <li className="text-sm text-[var(--ink)]/50">No notes yet</li>}
-        <AnimatePresence>
+      <div className="flex flex-col gap-2">
+        {sorted.length === 0 && <p className="text-sm text-[var(--ink)]/50">No notes yet</p>}
+        <AnimatePresence initial={false}>
           {sorted.map((n) => (
-            <motion.li
-              layout key={n.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="text-sm rounded-lg px-3 py-2"
-              style={{ background: "var(--card-bg)", border: "1px solid var(--border-color)" }}
+            <motion.div
+              key={n.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="text-sm rounded-lg px-3 py-2 card-elevated"
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="font-medium">{n.title}</p>
@@ -87,10 +83,10 @@ export default function Notes() {
                 </div>
               </div>
               {n.body && <p className="opacity-60 mt-1 whitespace-pre-wrap">{n.body}</p>}
-            </motion.li>
+            </motion.div>
           ))}
         </AnimatePresence>
-      </motion.ul>
+      </div>
     </div>
   );
 }

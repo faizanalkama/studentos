@@ -1,21 +1,15 @@
-import { useEffect, useState } from "react";
-import { collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { useState } from "react";
+import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCollection } from "../hooks/useCollection";
 
 export default function Events() {
-  const [events, setEvents] = useState([]);
+  const events = useCollection("events");
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ title: "", date: "", category: "Personal" });
 
   const colRef = collection(db, "users", auth.currentUser.uid, "events");
-
-  useEffect(() => {
-    const unsub = onSnapshot(query(colRef), (snap) => {
-      setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, []);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -76,18 +70,25 @@ export default function Events() {
         )}
       </form>
 
-      <motion.ul layout>
+      <ul>
         {sorted.length === 0 && <li className="text-sm text-[var(--ink)]/50">No events yet</li>}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {sorted.map((e) => (
-            <motion.li layout key={e.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-sm mb-1.5">
+            <motion.li
+              key={e.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-2 text-sm mb-1.5"
+            >
               <span>{e.date} — {e.title} ({e.category})</span>
               <button onClick={() => startEdit(e)} className="text-xs text-[var(--ink)]/40 hover:text-[var(--accent)] ml-auto">Edit</button>
               <button onClick={() => handleDelete(e.id)} className="text-xs text-[var(--ink)]/40 hover:text-[var(--accent)]">✕</button>
             </motion.li>
           ))}
         </AnimatePresence>
-      </motion.ul>
+      </ul>
     </div>
   );
 }
