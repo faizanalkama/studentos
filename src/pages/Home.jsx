@@ -29,14 +29,13 @@ const todayKey = new Date().toDateString();
 export default function Home({ user }) {
   const [greeting, setGreeting] = useState("");
   const [weather, setWeather] = useState(null);
+  const [weatherStatus, setWeatherStatus] = useState("loading"); // loading | denied | error | ok
   const [aiSummary, setAiSummary] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [monthlyBudget, setMonthlyBudget] = useState(6000);
 
-  // Shared listeners — same data Timetable/Assignments/Medicines/Budget/Events
-  // use when their pages are open. No duplicate connections anymore.
   const classesData = useCollection("timetable");
   const assignmentsData = useCollection("assignments");
   const medicinesData = useCollection("medicines");
@@ -51,14 +50,39 @@ export default function Home({ user }) {
     setGreeting(hour < 5 ? "Good Night" : hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : hour < 21 ? "Good Evening" : "Good Night");
   }, []);
 
+  // Reusable so it can be called again on tap (e.g. retry after denial),
+  // not just once on mount. Fast timeout + cached location + low accuracy
+  // for speed.
+  const fetchWeather = () => {
+    if (!navigator.geolocation) {
+      setWeatherStatus("error");
+      return;
+    }
+    setWeatherStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}`
+          );
+          const data = await res.json();
+          setWeather(data);
+          setWeatherStatus("ok");
+        } catch {
+          setWeatherStatus("error");
+        }
+      },
+      (err) => {
+        setWeatherStatus(err.code === 1 ? "denied" : "error");
+      },
+      { timeout: 6000, maximumAge: 600000, enableHighAccuracy: false }
+    );
+  };
+
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude, longitude } = pos.coords;
-      const res = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}`
-      );
-      setWeather(await res.json());
-    });
+    fetchWeather();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -90,7 +114,6 @@ export default function Home({ user }) {
   }, []);
 
   const generateSummary = async () => {
-    if (!weather) return;
     setAiLoading(true);
     setAiError(false);
     try {
@@ -106,11 +129,13 @@ export default function Home({ user }) {
     }
   };
 
+  // AI briefing generates as soon as we know the location outcome
+  // (allowed, denied, or errored) — never blocked waiting on weather.
   useEffect(() => {
-    if (!weather || aiSummary) return;
+    if (weatherStatus === "loading" || aiSummary) return;
     generateSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather]);
+  }, [weatherStatus]);
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-10 max-w-6xl mx-auto">
@@ -136,9 +161,22 @@ export default function Home({ user }) {
           <span className="text-white text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "var(--accent)" }}>
             ✨ Today's Briefing
           </span>
-          <button onClick={generateSummary} disabled={aiLoading} className="text-xs font-medium px-2.5 py-1.5 rounded-full disabled:opacity-40" style={{ background: "rgba(255,255,255,0.08)" }}>
-            {aiLoading ? "..." : "🔄 Refresh"}
-          </button>
+          <motion.button
+            onClick={generateSummary}
+            disabled={aiLoading}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            className="text-xs font-medium px-2.5 py-1.5 rounded-full flex items-center gap-1.5 disabled:opacity-50"
+            style={{ background: "rgba(255,255,255,0.08)" }}
+          >
+            <motion.span
+              animate={aiLoading ? { rotate: 360 } : { rotate: 0 }}
+              transition={aiLoading ? { repeat: Infinity, duration: 0.7, ease: "linear" } : { duration: 0.2 }}
+            >
+              🔄
+            </motion.span>
+            {aiLoading ? "" : "Refresh"}
+          </motion.button>
         </div>
 
         <AnimatePresence mode="wait">
@@ -169,13 +207,23 @@ export default function Home({ user }) {
       </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        <Card title="🌤 Weather" delay={0}>
-          {weather ? (
+        <Card
+          title="🌤 Weather"
+          delay={0}
+          onClick={weatherStatus === "denied" || weatherStatus === "error" ? fetchWeather : undefined}
+        >
+          {weatherStatus === "ok" && weather ? (
             <div>
               <p className="text-xl font-semibold">{Math.round(weather.main.temp)}°C</p>
               <p className="text-xs capitalize opacity-70">{weather.weather[0].description}</p>
             </div>
-          ) : "Loading…"}
+          ) : weatherStatus === "denied" ? (
+            <p className="text-xs opacity-50">Tap to allow location</p>
+          ) : weatherStatus === "error" ? (
+            <p className="text-xs opacity-50">Tap to retry</p>
+          ) : (
+            <p className="text-xs opacity-50">Loading…</p>
+          )}
         </Card>
         <Card title="💰 Budget" delay={0.05} link="/budget">
           <p className="text-xl font-semibold">₹{budgetInfo.remaining}</p>
@@ -261,14 +309,16 @@ export default function Home({ user }) {
   );
 }
 
-function Card({ title, children, delay, link }) {
+function Card({ title, children, delay, link, onClick }) {
   const content = (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3 }}
       whileHover={{ y: -3 }}
-      className="rounded-2xl p-4 h-full card-elevated"
+      whileTap={onClick ? { scale: 0.97 } : {}}
+      onClick={onClick}
+      className={`rounded-2xl p-4 h-full card-elevated ${onClick ? "cursor-pointer" : ""}`}
     >
       <h3 className="text-xs font-semibold mb-1.5 opacity-70">{title}</h3>
       {children}
